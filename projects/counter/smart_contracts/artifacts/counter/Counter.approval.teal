@@ -1,0 +1,152 @@
+#pragma version 10
+
+smart_contracts.counter.contract.Counter.approval_program:
+    txn NumAppArgs
+    bz main_bare_routing@8
+    method "add(uint64,uint64)uint64"
+    method "sub(uint64,uint64)uint64"
+    method "mul(uint64,uint64)uint64"
+    method "div(uint64,uint64)uint64"
+    txna ApplicationArgs 0
+    match main_add_route@2 main_sub_route@3 main_mul_route@4 main_div_route@5
+    err // reject transaction
+
+main_add_route@2:
+    txn OnCompletion
+    !
+    assert // OnCompletion is NoOp
+    txn ApplicationID
+    assert // is not creating
+    txna ApplicationArgs 1
+    btoi
+    txna ApplicationArgs 2
+    btoi
+    callsub add
+    itob
+    byte 0x151f7c75
+    swap
+    concat
+    log
+    int 1
+    return
+
+main_sub_route@3:
+    txn OnCompletion
+    !
+    assert // OnCompletion is NoOp
+    txn ApplicationID
+    assert // is not creating
+    txna ApplicationArgs 1
+    btoi
+    txna ApplicationArgs 2
+    btoi
+    callsub sub
+    itob
+    byte 0x151f7c75
+    swap
+    concat
+    log
+    int 1
+    return
+
+main_mul_route@4:
+    txn OnCompletion
+    !
+    assert // OnCompletion is NoOp
+    txn ApplicationID
+    assert // is not creating
+    txna ApplicationArgs 1
+    btoi
+    txna ApplicationArgs 2
+    btoi
+    callsub mul
+    itob
+    byte 0x151f7c75
+    swap
+    concat
+    log
+    int 1
+    return
+
+main_div_route@5:
+    txn OnCompletion
+    !
+    assert // OnCompletion is NoOp
+    txn ApplicationID
+    assert // is not creating
+    txna ApplicationArgs 1
+    btoi
+    txna ApplicationArgs 2
+    btoi
+    callsub div
+    itob
+    byte 0x151f7c75
+    swap
+    concat
+    log
+    int 1
+    return
+
+main_bare_routing@8:
+    txn OnCompletion
+    !
+    assert // reject transaction
+    txn ApplicationID
+    !
+    assert // is creating
+    int 1
+    return
+
+
+// smart_contracts.counter.contract.Counter.add(a: uint64, b: uint64) -> uint64:
+add:
+    proto 2 1
+    frame_dig -2
+    frame_dig -1
+    +
+    retsub
+
+
+// smart_contracts.counter.contract.Counter.sub(a: uint64, b: uint64) -> uint64:
+sub:
+    proto 2 1
+    frame_dig -2
+    frame_dig -1
+    >
+    assert // a must be greater than b
+    frame_dig -2
+    frame_dig -1
+    -
+    retsub
+
+
+// smart_contracts.counter.contract.Counter.mul(a: uint64, b: uint64) -> uint64:
+mul:
+    proto 2 1
+    frame_dig -2
+    bz mul_bool_false@3
+    frame_dig -1
+    bz mul_bool_false@3
+    int 1
+    b mul_bool_merge@4
+
+mul_bool_false@3:
+    int 0
+
+mul_bool_merge@4:
+    assert // a and b must be greater than 0
+    frame_dig -2
+    frame_dig -1
+    *
+    retsub
+
+
+// smart_contracts.counter.contract.Counter.div(a: uint64, b: uint64) -> uint64:
+div:
+    proto 2 1
+    frame_dig -1
+    assert // b must be greater than 0
+    frame_dig -2
+    frame_dig -1
+    /
+    retsub
